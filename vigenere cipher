@@ -1,0 +1,66 @@
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+#define MAX_TEXT_LENGTH 1000
+
+void vigenere_encrypt(char *plaintext, char *key) {
+    int textLen = strlen(plaintext);
+    int keyLen = strlen(key);
+    char encrypted[MAX_TEXT_LENGTH];
+
+    for (int i = 0, j = 0; i < textLen; i++) {
+        char currentChar = plaintext[i];
+
+        if (isalpha(currentChar)) {
+            char caseDiff = isupper(currentChar) ? 'A' : 'a';
+            encrypted[i] = ((currentChar + key[j] - 2 * caseDiff) % 26) + caseDiff;
+            j = (j + 1) % keyLen;
+        } else {
+            encrypted[i] = currentChar;
+        }
+    }
+
+    encrypted[textLen] = '\0';
+    printf("Encrypted text: %s\n", encrypted);
+}
+
+void vigenere_decrypt(char *ciphertext, char *key) {
+    int textLen = strlen(ciphertext);
+    int keyLen = strlen(key);
+    char decrypted[MAX_TEXT_LENGTH];
+
+    for (int i = 0, j = 0; i < textLen; i++) {
+        char currentChar = ciphertext[i];
+
+        if (isalpha(currentChar)) {
+            char caseDiff = isupper(currentChar) ? 'A' : 'a';
+            decrypted[i] = ((currentChar - key[j] + 26) % 26) + caseDiff;
+            j = (j + 1) % keyLen;
+        } else {
+            decrypted[i] = currentChar;
+        }
+    }
+
+    decrypted[textLen] = '\0';
+    printf("Decrypted text: %s\n", decrypted);
+}
+
+int main() {
+    char plaintext[MAX_TEXT_LENGTH];
+    char key[MAX_TEXT_LENGTH];
+
+    printf("Enter plaintext: ");
+    fgets(plaintext, MAX_TEXT_LENGTH, stdin);
+    printf("Enter key: ");
+    fgets(key, MAX_TEXT_LENGTH, stdin);
+
+  
+    plaintext[strcspn(plaintext, "\n")] = '\0';
+    key[strcspn(key, "\n")] = '\0';
+
+    vigenere_encrypt(plaintext, key);
+    vigenere_decrypt(plaintext, key);
+
+    return 0;
+}
