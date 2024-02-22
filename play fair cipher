@@ -1,0 +1,127 @@
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+#define SIZE 5
+
+void prepareKey(char *key, char *preparedKey) 
+{
+    int i, j, k = 0;
+    int len = strlen(key);
+    char temp[26] = {0};
+for (i = 0; i < len; i++) 
+{
+if (isalpha(key[i]))
+key[i] = toupper(key[i]);
+}
+for (i = 0; i < len; i++) 
+{
+if (key[i] != 'J') 
+{
+if (temp[key[i] - 'A'] == 0) 
+{
+temp[key[i] - 'A'] = 1;
+preparedKey[k++] = key[i];
+}
+}
+}
+
+    for (i = 0; i < 26; i++) {
+        if (i != ('J' - 'A') && temp[i] == 0)
+            preparedKey[k++] = i + 'A';
+    }
+    preparedKey[k] = '\0';
+}
+
+void generateMatrix(char *key, char matrix[SIZE][SIZE]) {
+    char preparedKey[26];
+    prepareKey(key, preparedKey);
+
+    int i, j, k = 0;
+    for (i = 0; i < SIZE; i++) {
+        for (j = 0; j < SIZE; j++) {
+            matrix[i][j] = preparedKey[k++];
+        }
+    }
+}
+
+void encryptPair(char matrix[SIZE][SIZE], char a, char b, char *cipher) {
+    int row1, col1, row2, col2;
+
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            if (matrix[i][j] == a) {
+                row1 = i;
+                col1 = j;
+            }
+            if (matrix[i][j] == b) {
+                row2 = i;
+                col2 = j;
+            }
+        }
+    }
+
+    if (row1 == row2) {
+        cipher[0] = matrix[row1][(col1 + 1) % SIZE];
+        cipher[1] = matrix[row2][(col2 + 1) % SIZE];
+    } else if (col1 == col2) {
+        cipher[0] = matrix[(row1 + 1) % SIZE][col1];
+        cipher[1] = matrix[(row2 + 1) % SIZE][col2];
+    } else {
+        cipher[0] = matrix[row1][col2];
+        cipher[1] = matrix[row2][col1];
+    }
+}
+
+void encrypt(char *plaintext, char *key, char *ciphertext) {
+    char matrix[SIZE][SIZE];
+    generateMatrix(key, matrix);
+
+    int len = strlen(plaintext);
+    int index = 0;
+
+    for (int i = 0; i < len; i++) {
+        if (isalpha(plaintext[i])) {
+            plaintext[index++] = toupper(plaintext[i]);
+        }
+    }
+    plaintext[index] = '\0';
+
+    for (int i = 0; i < index - 1; i += 2) {
+        if (plaintext[i] == plaintext[i + 1]) {
+            memmove(plaintext + i + 1, plaintext + i, strlen(plaintext + i) + 1);
+            plaintext[i + 1] = 'X';
+            index++;
+        }
+    }
+
+    if (index % 2 != 0) {
+        plaintext[index++] = 'X';
+        plaintext[index] = '\0';
+    }
+
+    printf("Plaintext: %s\n", plaintext);
+
+    for (int i = 0; i < index; i += 2) {
+        encryptPair(matrix, plaintext[i], plaintext[i + 1], ciphertext + i);
+    }
+    ciphertext[index] = '\0';
+}
+
+int main() {
+    char key[100];
+    char plaintext[100];
+    char ciphertext[100];
+    printf("Enter the key: ");
+    fgets(key, sizeof(key), stdin);
+    key[strcspn(key, "\n")] = '\0'; 
+
+    printf("Enter the plaintext: ");
+    fgets(plaintext, sizeof(plaintext), stdin);
+    plaintext[strcspn(plaintext, "\n")] = '\0'; 
+
+    encrypt(plaintext, key, ciphertext);
+    printf("Ciphertext: %s\n", ciphertext);
+
+    return 0;
+}
