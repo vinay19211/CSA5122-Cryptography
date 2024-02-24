@@ -1,0 +1,132 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+char* columnarTranspositionEncrypt(char *plaintext, char *key) {
+    int keyLen = strlen(key);
+    int textLen = strlen(plaintext);
+    int numCols = keyLen;
+    int numRows = textLen / keyLen;
+    if (textLen % keyLen)
+        numRows++;
+
+    char *cipher = (char *)malloc((textLen + 1) * sizeof(char));
+
+    char **matrix = (char **)malloc(numRows * sizeof(char *));
+    for (int i = 0; i < numRows; i++) {
+        matrix[i] = (char *)malloc(numCols * sizeof(char));
+    }
+
+    int k = 0;
+    for (int i = 0; i < numRows; i++) {
+        for (int j = 0; j < numCols; j++) {
+            if (k < textLen)
+                matrix[i][j] = plaintext[k++];
+            else
+                matrix[i][j] = ' ';
+        }
+    }
+    k = 0;
+    for (int j = 0; j < keyLen; j++) {
+        int index = key[j] - '0' - 1;
+        for (int i = 0; i < numRows; i++) {
+            cipher[k++] = matrix[i][index];
+        }
+    }
+    cipher[textLen] = '\0';
+
+    for (int i = 0; i < numRows; i++) {
+        free(matrix[i]);
+    }
+    free(matrix);
+
+    return cipher;
+}
+
+char* columnarTranspositionDecrypt(char *cipher, char *key) {
+    int keyLen = strlen(key);
+    int textLen = strlen(cipher);
+    int numCols = keyLen;
+    int numRows = textLen / keyLen;
+    if (textLen % keyLen)
+        numRows++;
+
+    char *plaintext = (char *)malloc((textLen + 1) * sizeof(char));
+
+    char **matrix = (char **)malloc(numRows * sizeof(char *));
+    for (int i = 0; i < numRows; i++) {
+        matrix[i] = (char *)malloc(numCols * sizeof(char));
+    }
+
+    int charsInLastCol = textLen % keyLen;
+
+    int *colCounts = (int *)malloc(keyLen * sizeof(int));
+    for (int i = 0; i < keyLen; i++) {
+        colCounts[i] = numRows;
+        if (i < charsInLastCol)
+            colCounts[i]++;
+    }
+
+    int fullCols = 0;
+    for (int i = 0; i < keyLen; i++) {
+        if (colCounts[i] == numRows)
+            fullCols++;
+    }
+
+    int colsFromLast = keyLen - fullCols;
+    int lastColStart = textLen - charsInLastCol;
+
+    int k = 0;
+    for (int j = 0; j < keyLen; j++) {
+        int index = key[j] - '0' - 1;
+        int count = colCounts[index];
+        for (int i = 0; i < count; i++) {
+            if (j < colsFromLast || (j == colsFromLast && i < numRows - charsInLastCol))
+                matrix[i][index] = cipher[k++];
+            else
+                matrix[i][index] = cipher[lastColStart++];
+        }
+    }
+
+    k = 0;
+    for (int i = 0; i < numRows; i++) {
+        for (int j = 0; j < numCols; j++) {
+            plaintext[k++] = matrix[i][j];
+        }
+    }
+    plaintext[textLen] = '\0';
+
+    for (int i = 0; i < numRows; i++) {
+        free(matrix[i]);
+    }
+    free(matrix);
+    free(colCounts);
+
+    return plaintext;
+}
+
+int main() {
+    char plaintext[100];
+    char key[100];
+
+    printf("Enter the plaintext: ");
+    fgets(plaintext, sizeof(plaintext), stdin);
+    plaintext[strcspn(plaintext, "\n")] = '\0';
+
+    printf("Enter the key (sequence of digits): ");
+    fgets(key, sizeof(key), stdin);
+    key[strcspn(key, "\n")] = '\0'; 
+
+    printf("Plaintext: %s\n", plaintext);
+
+    char *cipher = columnarTranspositionEncrypt(plaintext, key);
+    printf("Encrypted: %s\n", cipher);
+
+    char *decrypted = columnarTranspositionDecrypt(cipher, key);
+    printf("Decrypted: %s\n", decrypted);
+
+    free(cipher);
+    free(decrypted);
+
+    return 0;
+}
